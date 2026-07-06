@@ -30,7 +30,7 @@ html, body {
   font-family: 'Crimson Text', Georgia, serif;
   font-size: 18px;
   color: var(--text-dark);
-  background: var(--green-dark) url('assets/bg-page.jpg') center/cover fixed;
+  background: var(--green-dark) url('../assets/bg-page.jpg') center/cover fixed;
   overflow-x: hidden;
 }
 
@@ -69,7 +69,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 
 /* ── Parchment card (NO burned edges) ────── */
 .parchment {
-  background: var(--parchment) url('assets/parchment.jpg') center/cover;
+  background: var(--parchment) url('../assets/parchment.jpg') center/cover;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.5rem;
@@ -193,7 +193,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 /* ── Cover / Landing ─────────────────────── */
 .cover-page {
   min-height: 100vh;
-  background: url('assets/bg-cover.jpg') center/cover no-repeat;
+  background: url('../assets/bg-cover.jpg') center/cover no-repeat;
   display: flex; align-items: center; justify-content: center;
 }
 .cover-content {
@@ -214,7 +214,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
   padding: 2rem 1rem;
-  background: url('assets/bg-cover.jpg') center/cover no-repeat;
+  background: url('../assets/bg-cover.jpg') center/cover no-repeat;
 }
 .auth-card { width: 100%; max-width: 420px; }
 .auth-title { font-size: 1.4rem; text-align: center; color: var(--ink); margin-bottom: 1.5rem; }
