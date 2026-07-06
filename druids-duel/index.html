@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Druid's Duel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- ======= NAV ======= -->
+<nav id="main-nav" class="hidden">
+  <div class="nav-brand">
+    <img src="assets/logo.jpg" alt="Druid's Duel" class="nav-logo">
+    <span class="nav-title">Druid's Duel</span>
+  </div>
+  <div class="nav-links">
+    <a href="#/challenge" class="nav-link">Play</a>
+    <a href="#/challenges" class="nav-link">Challenges</a>
+    <a href="#/rules" class="nav-link">Rules</a>
+    <a href="#/lore" class="nav-link">Lore</a>
+    <a href="#/history" class="nav-link">History</a>
+    <a href="#/friends" class="nav-link">Friends</a>
+  </div>
+  <div class="nav-user">
+    <a href="#/profile" id="nav-username" class="nav-link">Profile</a>
+    <button id="nav-logout" class="btn-ghost">Sign Out</button>
+  </div>
+  <button id="nav-hamburger" class="hamburger">☰</button>
+</nav>
+
+<!-- ======= PAGES ======= -->
+<main id="app">
+
+  <!-- LANDING -->
+  <div id="page-landing" class="page cover-page hidden">
+    <div class="cover-overlay">
+      <img src="assets/logo.jpg" alt="Druid's Duel" class="cover-logo">
+      <h1 class="cover-title">Druid's Duel</h1>
+      <p class="cover-subtitle">A Celtic Knot Weaving Challenge</p>
+      <div class="cover-actions">
+        <a href="#/login" class="btn-primary">Enter the Circle</a>
+        <a href="#/register" class="btn-secondary">Join the Guild</a>
+      </div>
+      <div class="cover-links">
+        <a href="#/rules" class="cover-link">Rules</a>
+        <span>·</span>
+        <a href="#/lore" class="cover-link">Lore</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="page-login" class="page auth-page hidden">
+    <div class="auth-card parchment">
+      <h2 class="auth-title">Enter the Circle</h2>
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" required placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••">
+        </div>
+        <div id="login-error" class="form-error hidden"></div>
+        <button type="submit" class="btn-primary full-width">Sign In</button>
+      </form>
+      <div class="auth-links">
+        <a href="#/forgot">Forgot your password?</a>
+        <span>·</span>
+        <a href="#/register">Join the Guild</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="page-register" class="page auth-page hidden">
+    <div class="auth-card parchment">
+      <h2 class="auth-title">Join the Guild</h2>
+      <form id="register-form" class="auth-form">
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" id="reg-name" required placeholder="Your druid name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="reg-email" required placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="reg-password" required placeholder="At least 8 characters" minlength="8">
+        </div>
+        <div id="register-error" class="form-error hidden"></div>
+        <div id="register-success" class="form-success hidden"></div>
+        <button type="submit" class="btn-primary full-width">Join the Guild</button>
+      </form>
+      <div class="auth-links">
+        <a href="#/login">Already a member? Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD -->
+  <div id="page-forgot" class="page auth-page hidden">
+    <div class="auth-card parchment">
+      <h2 class="auth-title">Restore Your Path</h2>
+      <p class="auth-subtitle">Enter your email and we'll send you a recovery link.</p>
+      <form id="forgot-form" class="auth-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="forgot-email" required placeholder="your@email.com">
+        </div>
+        <div id="forgot-error" class="form-error hidden"></div>
+        <div id="forgot-success" class="form-success hidden"></div>
+        <button type="submit" class="btn-primary full-width">Send Recovery Link</button>
+      </form>
+      <div class="auth-links">
+        <a href="#/login">Back to Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHALLENGE SELECTOR -->
+  <div id="page-challenge" class="page hidden">
+    <div class="page-inner">
+      <h1 class="page-title">Draw a Challenge</h1>
+
+      <!-- Filters -->
+      <div id="challenge-filters" class="filters-bar parchment">
+        <div class="filter-group">
+          <span class="filter-label">Difficulty:</span>
+          <label class="check-pill"><input type="checkbox" id="f-easy" checked> Easy</label>
+          <label class="check-pill"><input type="checkbox" id="f-medium" checked> Medium</label>
+          <label class="check-pill"><input type="checkbox" id="f-hard" checked> Hard</label>
+        </div>
+        <div class="filter-group">
+          <label class="check-pill"><input type="checkbox" id="f-new-only"> New Challenges Only</label>
+        </div>
+      </div>
+
+      <!-- Draw button -->
+      <div id="challenge-draw-area">
+        <button id="btn-draw" class="btn-draw">
+          <span class="btn-draw-icon">⬡</span>
+          Draw Challenge
+        </button>
+      </div>
+
+      <!-- Challenge card (hidden until drawn) -->
+      <div id="challenge-card" class="challenge-card parchment hidden">
+        <div class="challenge-header">
+          <span id="challenge-difficulty" class="difficulty-badge"></span>
+          <span id="challenge-id" class="challenge-id-label"></span>
+        </div>
+        <div id="challenge-weaves" class="weaves-grid"></div>
+        <div class="challenge-total">
+          Total Weaves: <strong id="challenge-total"></strong>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-section">
+          <div id="timer-display" class="timer-display">0:00.0</div>
+          <button id="btn-stop-timer" class="btn-stop-timer hidden">⬛ Stop Timer</button>
+          <div id="timer-result" class="timer-result hidden"></div>
+        </div>
+
+        <!-- Actions -->
+        <div id="challenge-actions" class="challenge-actions">
+          <button id="btn-complete" class="btn-primary">Mark Complete</button>
+          <button id="btn-redraw" class="btn-secondary">Draw Another</button>
+        </div>
+        <div id="complete-success" class="form-success hidden">Challenge recorded!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHALLENGE LIST -->
+  <div id="page-challenges" class="page hidden">
+    <div class="page-inner">
+      <h1 class="page-title">All Challenges</h1>
+      <div class="challenges-list-filters parchment">
+        <label class="check-pill"><input type="checkbox" id="cl-easy" checked> Easy</label>
+        <label class="check-pill"><input type="checkbox" id="cl-medium" checked> Medium</label>
+        <label class="check-pill"><input type="checkbox" id="cl-hard" checked> Hard</label>
+        <label class="check-pill"><input type="checkbox" id="cl-completed"> Show Completed</label>
+        <label class="check-pill"><input type="checkbox" id="cl-new" checked> Show New</label>
+      </div>
+      <div id="challenges-list-grid" class="challenges-grid"></div>
+    </div>
+  </div>
+
+  <!-- GAME SESSION -->
+  <div id="page-game" class="page hidden">
+    <div class="page-inner">
+      <h1 class="page-title">Start a Duel</h1>
+      <div id="game-setup" class="parchment game-setup">
+        <h3>Players</h3>
+        <div id="players-list" class="players-list"></div>
+        <div class="add-player-row">
+          <input type="text" id="add-player-name" placeholder="Player name">
+          <button id="btn-add-player" class="btn-secondary">Add Player</button>
+        </div>
+        <div id="friend-suggestions" class="friend-suggestions hidden"></div>
+        <div class="game-setup-actions">
+          <button id="btn-start-game" class="btn-primary">Start the Duel</button>
+        </div>
+      </div>
+
+      <div id="game-active" class="hidden">
+        <div id="game-challenge-card" class="challenge-card parchment"></div>
+        <div class="timer-section">
+          <div id="game-timer" class="timer-display">0:00.0</div>
+          <button id="btn-game-stop" class="btn-stop-timer">⬛ Stop Timer</button>
+        </div>
+      </div>
+
+      <div id="game-finish" class="parchment game-finish hidden">
+        <h3>Record the Result</h3>
+        <div class="form-group">
+          <label>Winner</label>
+          <select id="game-winner-select"></select>
+        </div>
+        <div class="form-group">
+          <label>Upload Winning Knot Photo (optional)</label>
+          <input type="file" id="game-photo-upload" accept="image/*">
+          <div id="photo-preview" class="photo-preview hidden"></div>
+        </div>
+        <button id="btn-save-game" class="btn-primary">Save Game</button>
+        <div id="game-save-success" class="form-success hidden">Game saved!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="page-history" class="page hidden">
+    <div class="page-inner">
+      <h1 class="page-title">Game History</h1>
+      <div id="history-list" class="history-list"></div>
+    </div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div id="page-friends" class="page hidden">
+    <div class="page-inner">
+      <h1 class="page-title">Fellow Druids</h1>
+      <div class="parchment friends-search">
+        <h3>Find a Druid</h3>
+        <div class="search-row">
+          <input type="text" id="friend-search-input" placeholder="Search by username">
+          <button id="btn-friend-search" class="btn-secondary">Search</button>
+        </div>
+        <div id="friend-search-results" class="friend-results"></div>
+      </div>
+      <div class="parchment">
+        <h3>Your Circle</h3>
+        <div id="friends-list" class="friends-list"></div>
+      </div>
+      <div class="parchment">
+        <h3>Pending Invitations</h3>
+        <div id="pending-list" class="friends-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="page-profile" class="page hidden">
+    <div class="page-inner">
+      <h1 class="page-title">Your Druid</h1>
+      <div class="profile-card parchment">
+        <div class="profile-avatar">⬡</div>
+        <div class="profile-info">
+          <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" id="profile-name" class="profile-input">
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="profile-username" class="profile-input">
+          </div>
+          <button id="btn-save-profile" class="btn-primary">Save</button>
+          <div id="profile-success" class="form-success hidden">Saved!</div>
+        </div>
+        <div class="profile-stats">
+          <div class="stat"><span id="stat-completed">0</span><label>Completed</label></div>
+          <div class="stat"><span id="stat-games">0</span><label>Games Played</label></div>
+          <div class="stat"><span id="stat-wins">0</span><label>Wins</label></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RULES -->
+  <div id="page-rules" class="page hidden">
+    <div class="page-inner parchment prose-page">
+      <h1>How to Play</h1>
+      <h2>The Game</h2>
+      <p>Druid's Duel is a physical game of Celtic knot weaving played with a set of five tile types — Loops, Spans, Bends, Branches, and Crosses. Each player draws their tiles from a cloth pouch and uses them to weave intricate, closed-path knots on the table in front of them.</p>
+      <h2>Solo Play</h2>
+      <p>Select a challenge using the <a href="#/challenge">Play</a> page. The challenge will specify exactly how many of each weave type to use. Empty your pouch, select the specified tiles, and race against the clock to weave a complete closed knot — no loose ends — using precisely those weaves. Not one more, not one less.</p>
+      <h2>Multiplayer (The Duel)</h2>
+      <p>Two or more Druids gather around a shared device. One player starts a Duel session and adds all participants. When ready, the challenge is revealed simultaneously to all players. Each Druid weaves independently, racing to be the first to complete a closed, valid knot using the exact set of weaves specified. The first to complete calls it, and the group verifies — then the winner is recorded and a photo of the winning knot can be saved for posterity.</p>
+      <h2>The Five Weaves</h2>
+      <div class="rules-weaves">
+        <div class="rules-weave"><img src="assets/weave-loop.png" alt="Loop"><h4>Loop</h4><p>Quickly ties up loose ends. Turns paths back on themselves.</p></div>
+        <div class="rules-weave"><img src="assets/weave-span.png" alt="Span"><h4>Span</h4><p>Bridges distance. Good for connecting far-apart strands.</p></div>
+        <div class="rules-weave"><img src="assets/weave-bend.png" alt="Bend"><h4>Bend</h4><p>Redirects wandering paths. Pulls strands back together.</p></div>
+        <div class="rules-weave"><img src="assets/weave-branch.png" alt="Branch"><h4>Branch</h4><p>Opens or closes paths. Can expand or contract the knot.</p></div>
+        <div class="rules-weave"><img src="assets/weave-cross.png" alt="Cross"><h4>Cross</h4><p>Works well on the inside of a Knot. Interlaces strands.</p></div>
+      </div>
+      <h2>Completing a Challenge</h2>
+      <p>A knot is complete when every strand is part of a closed loop — no strand has a loose end dangling free. You must use all of the specified weaves and no others. When your knot is complete, tap the Stop Timer button, then Mark Complete to record your time.</p>
+      <h2>Challenges</h2>
+      <p>Challenges are rated Easy, Medium, or Hard based on their composition. Easier challenges use more Bends and fewer complex weave types. Harder challenges introduce Spans and Crosses, which require more planning to close the knot.</p>
+    </div>
+  </div>
+
+  <!-- LORE -->
+  <div id="page-lore" class="page hidden">
+    <div class="page-inner parchment prose-page">
+      <h1>The Lore of the Knot</h1>
+      <h2>The Guild of the Knot</h2>
+      <p>Beneath the whispering oaks of ancient Ériu, there exists a circle older than memory — the Guild of the Knot. These men and women, known as Druids, do not merely practice weaving as craft. They understand, as few do, that the patterns they create are tethers between worlds — stitching together wind and water, stone and root, life and spirit.</p>
+      <p>Each Knot the Guild weaves is an act of balance. The land sings when a Knot is completed correctly. It shivers when one is left unfinished. The Druids take this responsibility seriously, gathering by firelight to work in concert, their breath fogging in the chill of Samhain and Beltane alike.</p>
+      <h2>The Morrigan</h2>
+      <p>The Morrigan is keeper of thresholds and timing. She watches the crossings where strands meet. Shapeshifter, crow-goddess, the great queen who walks the edge between order and chaos — she does not weave herself, but her breath moves through every Knot. She whispers the shape of things that should be. She nudges. She tests.</p>
+      <p>A Knot completed in her name becomes more than pattern — it becomes a ward. A promise. A seal pressed into the fabric of the world. The Morrigan rewards those who keep their commitments to the Knot and remembers those who do not.</p>
+      <h2>The Five Weaves</h2>
+      <p>Long ago, the first Druids did not know how to weave. The Morrigan came to them in the form of a crow and dropped five tiles at their feet — Loop, Span, Bend, Branch, and Cross. "These are the letters," she said, "of a language older than yours. Learn them. Build with them. Close what you open." Then she was gone.</p>
+      <p>The Druids studied the tiles for seven years before they wove their first closed Knot. When the last strand locked into place, a sound rang across the valley like a harp string plucked by no human hand. The oak trees bent. The rivers paused. The Morrigan, watching from a high branch, ruffled her feathers and said nothing, but her eyes were satisfied.</p>
+      <h2>The Duel</h2>
+      <p>The oldest tradition of the Guild is the Duel — not a contest of violence, but of speed and clarity. Two or more Druids are given the same Knot and race to complete it first. The victor's Knot is placed at the center of the circle as an offering. The others are studied, discussed, and in their imperfections, learned from.</p>
+      <p>The Duel is never truly about winning. It is about sharpening the mind against another mind — seeing how differently two people can solve the same puzzle, find the same shape. "There is only one closed Knot," the saying goes, "but a thousand paths to it."</p>
+      <h2>Naming the Knot</h2>
+      <p>When a Knot is sealed, the Guild pauses. Together, they give it a name — a thing remembered. In the ancient days, a scribe would sketch the pattern and record it on vellum in the Guild's great chronicle. The record served not merely as history but as proof: here is what we made, here is when, here is who was present. The Morrigan keeps her own record, of course, but the Guild keeps theirs.</p>
+      <p>Today the chronicle lives in this app. Photograph your knot. Name it if you like. Let it be remembered.</p>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="page-admin" class="page hidden">
+    <div class="page-inner">
+      <h1 class="page-title">Admin — Challenges</h1>
+      <div id="admin-challenges-table" class="parchment admin-table-wrap"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ======= LOADING OVERLAY ======= -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-knot">⬡</div>
+</div>
+
+<!-- ======= TOAST ======= -->
+<div id="toast" class="toast hidden"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
