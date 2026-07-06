@@ -707,4 +707,57 @@ el('btn-save-profile').addEventListener('click', async () => {
   const { error } = await sb.from('profiles')
     .update({ display_name: name, username, updated_at: new Date().toISOString() })
     .eq('id', state.user.id);
-  hi
+  hideLoading();
+  if (error) { showToast(error.message); return; }
+  state.profile.display_name = name;
+  state.profile.username = username;
+  el('nav-username').textContent = name;
+  show('profile-success');
+  setTimeout(() => hide('profile-success'), 2500);
+});
+
+// ── ADMIN ──────────────────────────────────
+async function initAdmin() {
+  showLoading();
+  const { data } = await sb.from('challenges').select('*').order('id');
+  hideLoading();
+  if (!data) return;
+
+  const rows = data.map(c => `<tr>
+    <td>${c.id}</td>
+    <td>${c.loop_count}</td><td>${c.span_count}</td><td>${c.cross_count}</td>
+    <td>${c.bend_count}</td><td>${c.branch_count}</td>
+    <td><span class="difficulty-badge ${c.difficulty}">${c.difficulty||'—'}</span></td>
+    <td>${c.weave_count}</td>
+    <td><label style="cursor:pointer"><input type="checkbox" ${c.is_visible?'checked':''}
+      onchange="toggleVisible(${c.id},this.checked)"></label></td>
+  </tr>`).join('');
+
+  el('admin-challenges-table').innerHTML =
+    '<table class="admin-table"><thead><tr>' +
+    '<th>#</th><th>Loop</th><th>Span</th><th>Cross</th><th>Bend</th><th>Branch</th>' +
+    '<th>Difficulty</th><th>Weaves</th><th>Visible</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+window.toggleVisible = async (id, visible) => {
+  await sb.from('challenges').update({ is_visible: visible }).eq('id', id);
+  showToast(visible ? 'Challenge visible' : 'Challenge hidden');
+};
+
+// ── Boot ───────────────────────────────────
+sb.auth.onAuthStateChange(async (event, session) => {
+  state.user = session?.user ?? null;
+  if (state.user) await loadUserData();
+  route();
+});
+
+window.addEventListener('hashchange', route);
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  state.user = session?.user ?? null;
+  if (state.user) await loadUserData();
+  hideLoading();
+  route();
+})();
