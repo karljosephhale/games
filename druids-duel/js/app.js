@@ -745,19 +745,32 @@ window.toggleVisible = async (id, visible) => {
   showToast(visible ? 'Challenge visible' : 'Challenge hidden');
 };
 
+
 // ── Boot ───────────────────────────────────
+// Show something immediately (sync) so the page is never blank
+route();
+
 sb.auth.onAuthStateChange(async (event, session) => {
   state.user = session?.user ?? null;
-  if (state.user) await loadUserData();
+  if (state.user) {
+    try { await loadUserData(); } catch(e) { console.warn('loadUserData error:', e); }
+  }
   route();
 });
 
 window.addEventListener('hashchange', route);
 
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  state.user = session?.user ?? null;
-  if (state.user) await loadUserData();
+  try {
+    const { data } = await sb.auth.getSession();
+    state.user = data?.session?.user ?? null;
+    if (state.user) {
+      try { await loadUserData(); } catch(e) { console.warn('loadUserData error:', e); }
+    }
+  } catch(e) {
+    console.warn('getSession error:', e);
+    state.user = null;
+  }
   hideLoading();
   route();
 })();
