@@ -723,19 +723,33 @@ async function searchFriends() {
 }
 
 window.inviteFriend = async (id, name) => {
+  // Prevent self-invite
+  if (id === state.user.id) {
+    showToast("You can't invite yourself, wise one.");
+    return;
+  }
   // Check both directions — prevent mutual-invite duplicates
   const { data: fwd } = await sb.from('friendships')
-    .select('id').eq('requester_id', state.user.id).eq('addressee_id', id).maybeSingle();
+    .select('id, status').eq('requester_id', state.user.id).eq('addressee_id', id).maybeSingle();
   const { data: rev } = await sb.from('friendships')
-    .select('id').eq('requester_id', id).eq('addressee_id', state.user.id).maybeSingle();
-  if (fwd || rev) {
-    showToast(rev ? `${name} has already invited you! Check Pending Invitations.` : 'Already in your circle.');
+    .select('id, status').eq('requester_id', id).eq('addressee_id', state.user.id).maybeSingle();
+  if (fwd) {
+    showToast(fwd.status === 'accepted'
+      ? `${name} is already in your circle.`
+      : `Already waiting for ${name} to accept your invitation.`);
+    initFriends();
+    return;
+  }
+  if (rev) {
+    showToast(rev.status === 'accepted'
+      ? `${name} is already in your circle.`
+      : `${name} has already invited you! Check Pending Invitations.`);
     initFriends();
     return;
   }
   const { error } = await sb.from('friendships').insert({ requester_id: state.user.id, addressee_id: id });
   if (error) {
-    showToast(error.message.includes('unique') ? 'Already in your circle.' : error.message);
+    showToast(error.message.includes('unique') ? `${name} is already in your circle.` : error.message);
     initFriends();
     return;
   }
