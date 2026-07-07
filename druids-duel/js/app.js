@@ -188,7 +188,10 @@ el('register-form').addEventListener('submit', async e => {
   showLoading();
   const { error } = await sb.auth.signUp({
     email, password: pass,
-    options: { data: { display_name: name, username: name.toLowerCase().replace(/\s+/g,'_') } }
+    options: {
+      data: { display_name: name, username: name.toLowerCase().replace(/\s+/g,'_') },
+      emailRedirectTo: 'https://games.karlhale.com/druids-duel'
+    }
   });
   hideLoading();
   if (error) { showError('register-error', error.message); return; }
