@@ -9,6 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="assets/logo.jpg">
+  <!-- Polyfill navigator.locks for HTTP origins (GitHub Pages pre-HTTPS) -->
+  <script>
+    if (!navigator.locks) {
+      navigator.locks = {
+        request: async (name, optionsOrFn, fn) => {
+          const cb = typeof optionsOrFn === 'function' ? optionsOrFn : fn;
+          return cb({ name, mode: 'exclusive' });
+        }
+      };
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
