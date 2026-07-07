@@ -153,9 +153,13 @@ el('login-form').addEventListener('submit', async e => {
 
   let email = identifier;
   if (!isEmail(identifier)) {
-    // Look up email by username
-    const { data: prof } = await sb.from('profiles')
-      .select('email').eq('username', identifier.toLowerCase()).single();
+    // Look up email by username or display_name
+    const slug = identifier.toLowerCase().replace(/\s+/g, '_');
+    const { data: profs } = await sb.from('profiles')
+      .select('email')
+      .or(`username.eq.${slug},display_name.ilike.${identifier}`)
+      .limit(1);
+    const prof = profs?.[0];
     if (!prof?.email) {
       hideLoading();
       showError('login-error', 'No druid found with that name. Try your email instead.');
@@ -349,16 +353,11 @@ async function drawChallenge() {
   // Render challenge card
   renderChallengeCard(c);
 
-  // Show/hide correct action buttons
+  // Show action buttons (unified for solo + challenge)
   hide('complete-success');
   show('btn-stop-timer');
-  if (state.isSolo) {
-    show('btn-complete');
-    hide('btn-record-winner');
-  } else {
-    hide('btn-complete');
-    show('btn-record-winner');
-  }
+  show('btn-record-win');
+  show('btn-redraw');
 
   startTimer();
   showPlayStep('active');
@@ -411,68 +410,45 @@ function stopTimer() {
 }
 
 el('btn-stop-timer').addEventListener('click', () => {
-  stopTimer();
-  state.timerStopped = true;
-  hide('btn-stop-timer');
-  const r = el('timer-result');
-  r.textContent = `Time: ${formatTime(state.timerMs)}`;
-  r.classList.remove('hidden');
+  if (!state.timerStopped) {
+    stopTimer();
+    state.timerStopped = true;
+    el('btn-stop-timer').textContent = 'Resume Timer';
+    el('btn-stop-timer').classList.remove('btn-stop');
+    el('btn-stop-timer').classList.add('btn-secondary');
+    el('timer-result').textContent = `Time: ${formatTime(state.timerMs)}`;
+    show('timer-result');
+  } else {
+    state.timerStart = Date.now() - state.timerMs;
+    state.timerStopped = false;
+    state.timerInterval = setInterval(() => {
+      state.timerMs = Date.now() - state.timerStart;
+      el('timer-display').textContent = formatTime(state.timerMs);
+    }, 100);
+    el('btn-stop-timer').textContent = 'Stop Timer';
+    el('btn-stop-timer').classList.add('btn-stop');
+    el('btn-stop-timer').classList.remove('btn-secondary');
+    hide('timer-result');
+  }
 });
 
-// ── Solo complete ──────────────────────────
-el('btn-complete').addEventListener('click', async () => {
+// ── Record Win (unified solo + challenge) ──
+el('btn-record-win').addEventListener('click', () => {
   if (!state.currentChallenge) return;
   stopTimer();
-  if (!state.user) {
-    show('complete-success'); hide('btn-complete'); return;
+  state.timerStopped = true;
+  if (state.isSolo) {
+    hide('winner-group');
+  } else {
+    const sel = el('game-winner-select');
+    sel.innerHTML = state.gamePlayers.map((p,i) =>
+      `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+    show('winner-group');
   }
-  showLoading();
-  const { data: session, error: sessionErr } = await sb.from('game_sessions').insert({
-    challenge_id: state.currentChallenge.id,
-    host_user_id: state.user.id,
-    started_at: new Date(state.timerStart || Date.now()).toISOString(),
-    completed_at: new Date().toISOString(),
-    is_solo: true,
-  }).select().single();
-  if (sessionErr) {
-    console.error('game_sessions insert failed:', sessionErr);
-    hideLoading();
-    hide('btn-complete');
-    hide('btn-stop-timer');
-    show('complete-success');
-    showToast('Complete! (save failed — ' + sessionErr.message + ')');
-    return;
-  }
-  if (session) {
-    const { error: playerErr } = await sb.from('session_players').insert({
-      session_id: session.id,
-      user_id: state.user.id,
-      display_name: state.profile?.display_name || 'You',
-      is_winner: true,
-      completion_time_ms: state.timerMs || null,
-    });
-    if (playerErr) console.error('session_players insert failed:', playerErr);
-    state.completedIds.add(state.currentChallenge.id);
-    if (state.timerMs) {
-      if (!state.bestTimes[state.currentChallenge.id] || state.timerMs < state.bestTimes[state.currentChallenge.id]) {
-        state.bestTimes[state.currentChallenge.id] = state.timerMs;
-      }
-    }
-  }
-  hideLoading();
-  hide('btn-complete');
-  hide('btn-stop-timer');
-  show('complete-success');
-  showToast('Challenge complete! ⬡');
-});
-
-// ── Multiplayer: record winner ─────────────
-el('btn-record-winner').addEventListener('click', () => {
-  stopTimer();
-  // Populate winner select
-  const sel = el('game-winner-select');
-  sel.innerHTML = state.gamePlayers.map((p,i) =>
-    `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+  el('game-photo-upload').value = '';
+  el('game-camera-upload').value = '';
+  el('photo-preview').classList.add('hidden');
+  el('photo-upload-text').textContent = '📎 Choose Photo';
   hide('game-save-success');
   showPlayStep('finish');
 });
@@ -622,11 +598,17 @@ async function initChallengeList() {
 async function initHistory() {
   if (!state.user) return;
   showLoading();
-  const { data: sessions } = await sb.from('game_sessions')
-    .select('*, challenges(*), session_players(*)')
-    .eq('host_user_id', state.user.id)
-    .order('created_at', { ascending: false })
-    .limit(50);
+  // Get all sessions where user is a player (not just as host)
+  const { data: playerRows } = await sb.from('session_players')
+    .select('session_id').eq('user_id', state.user.id);
+  const sessionIds = [...new Set((playerRows || []).map(r => r.session_id))];
+  const { data: sessions } = sessionIds.length
+    ? await sb.from('game_sessions')
+        .select('*, challenges(*), session_players(*)')
+        .in('id', sessionIds)
+        .order('created_at', { ascending: false })
+        .limit(50)
+    : { data: [] };
   hideLoading();
 
   const list = el('history-list');
