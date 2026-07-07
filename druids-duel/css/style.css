@@ -69,7 +69,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 
 /* ── Parchment card (NO burned edges) ────── */
 .parchment {
-  background: var(--parchment) url('../assets/parchment.jpg') center/cover;
+  background: var(--parchment) url('../assets/parchment.png') center/cover;
   border-radius: var(--radius);
   padding: 1.5rem;
   border: 1px solid var(--parchment-dark);
@@ -192,7 +192,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 /* ── Cover / Landing ─────────────────────── */
 .cover-page {
   min-height: 100vh;
-  background: var(--parchment) url('../assets/parchment.jpg') center/cover;
+  background: var(--parchment) url('../assets/parchment.png') center/cover;
   display: flex; align-items: center; justify-content: center;
 }
 .cover-content {
@@ -213,7 +213,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
   padding: 2rem 1rem;
-  background: var(--parchment) url('../assets/parchment.jpg') center/cover;
+  background: var(--parchment) url('../assets/parchment.png') center/cover;
 }
 .auth-card { width: 100%; max-width: 420px; }
 .auth-title { font-size: 1.4rem; text-align: center; color: var(--ink); margin-bottom: 1.5rem; }
