@@ -711,8 +711,13 @@ async function searchFriends() {
 
 window.inviteFriend = async (id, name) => {
   const { error } = await sb.from('friendships').insert({ requester_id: state.user.id, addressee_id: id });
-  if (error) { showToast(error.message.includes('unique') ? 'Already in your circle.' : error.message); return; }
+  if (error) {
+    showToast(error.message.includes('unique') ? 'Already in your circle.' : error.message);
+    initFriends(); // refresh list to show the existing relationship
+    return;
+  }
   showToast(`Invitation sent to ${name}!`);
+  initFriends(); // refresh list to show the new pending invite
 };
 
 // ── PROFILE ────────────────────────────────
