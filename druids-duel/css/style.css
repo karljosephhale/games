@@ -72,7 +72,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   background: var(--parchment) url('../assets/parchment.png') center/cover;
   border-radius: var(--radius);
   padding: 2rem 2.5rem;
-  border: 1px solid var(--parchment-dark);
+  border: none;
 }
 
 /* ── Buttons ─────────────────────────────── */
@@ -458,18 +458,18 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   max-width: 760px; margin: 0 auto; padding: 0 2rem 3rem;
 }
 
-/* header/footer images sit INSIDE parchment, flush to edges */
+/* header/footer images sit INSIDE parchment, inset from edges */
 .lore-content {
-  padding: 0;
-  overflow: hidden; /* clips knot images to border-radius */
+  padding: 0 2.5rem;     /* left/right keeps braids inside visible parchment */
+  overflow: hidden;
 }
 .lore-knot-img {
   display: block; width: 100%; height: auto;
 }
-.lore-knot-img:first-child { margin-top: 1.75rem; }
-.lore-knot-img:last-child  { margin-bottom: 1.75rem; }
+.lore-knot-img:first-child { margin-top: 3.5rem; }    /* doubled: braid breathes at top */
+.lore-knot-img:last-child  { margin-bottom: 3.5rem; }  /* doubled: braid breathes at bottom */
 .lore-body {
-  padding: 3rem 3rem;
+  padding: 0.75rem 0.5rem 3rem; /* tight top → title hugs header braid */
 }
 .lore-title {
   font-size: 1.8rem; color: var(--ink); text-align: center;
@@ -506,7 +506,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   .timer-display    { font-size: 2.2rem; }
   .challenge-actions { flex-direction: column; align-items: stretch; }
   .challenges-grid  { grid-template-columns: 1fr 1fr; }
-  .lore-body        { padding: 2rem 1.5rem; }
+  .lore-body        { padding: 1rem 0.5rem 2rem; }
   .stats-row        { gap: 0.5rem; }
   .page-content     { padding: 1.25rem 1rem; }
 }
