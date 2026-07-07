@@ -423,21 +423,31 @@ el('btn-complete').addEventListener('click', async () => {
     show('complete-success'); hide('btn-complete'); return;
   }
   showLoading();
-  const { data: session } = await sb.from('game_sessions').insert({
+  const { data: session, error: sessionErr } = await sb.from('game_sessions').insert({
     challenge_id: state.currentChallenge.id,
     host_user_id: state.user.id,
     started_at: new Date(state.timerStart || Date.now()).toISOString(),
     completed_at: new Date().toISOString(),
     is_solo: true,
   }).select().single();
+  if (sessionErr) {
+    console.error('game_sessions insert failed:', sessionErr);
+    hideLoading();
+    hide('btn-complete');
+    hide('btn-stop-timer');
+    show('complete-success');
+    showToast('Complete! (save failed — ' + sessionErr.message + ')');
+    return;
+  }
   if (session) {
-    await sb.from('session_players').insert({
+    const { error: playerErr } = await sb.from('session_players').insert({
       session_id: session.id,
       user_id: state.user.id,
       display_name: state.profile?.display_name || 'You',
       is_winner: true,
       completion_time_ms: state.timerMs || null,
     });
+    if (playerErr) console.error('session_players insert failed:', playerErr);
     state.completedIds.add(state.currentChallenge.id);
     if (state.timerMs) {
       if (!state.bestTimes[state.currentChallenge.id] || state.timerMs < state.bestTimes[state.currentChallenge.id]) {
@@ -493,7 +503,7 @@ el('btn-save-game').addEventListener('click', async () => {
     }
   }
 
-  const { data: session } = await sb.from('game_sessions').insert({
+  const { data: session, error: sessionErr } = await sb.from('game_sessions').insert({
     challenge_id: state.currentChallenge?.id,
     host_user_id: state.user?.id || null,
     started_at: new Date(state.gameTimerStart || state.timerStart || Date.now()).toISOString(),
@@ -502,15 +512,23 @@ el('btn-save-game').addEventListener('click', async () => {
     knot_photo_url: photoUrl,
   }).select().single();
 
+  if (sessionErr) {
+    console.error('game_sessions insert failed:', sessionErr);
+    hideLoading();
+    show('game-save-success');
+    showToast('Saved! (DB error — ' + sessionErr.message + ')');
+    return;
+  }
   if (session) {
     for (const [i, p] of state.gamePlayers.entries()) {
-      await sb.from('session_players').insert({
+      const { error: playerErr } = await sb.from('session_players').insert({
         session_id: session.id,
         user_id: p.user_id || null,
         display_name: p.name,
         is_winner: i === winnerIdx,
         completion_time_ms: i === winnerIdx ? elapsed : null,
       });
+      if (playerErr) console.error('session_players insert failed:', playerErr);
     }
     if (state.currentChallenge) state.completedIds.add(state.currentChallenge.id);
   }
