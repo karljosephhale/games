@@ -153,13 +153,18 @@ el('login-form').addEventListener('submit', async e => {
 
   let email = identifier;
   if (!isEmail(identifier)) {
-    // Look up email by username or display_name
+    // Try username (slug) then display_name — separate queries avoid .or() space-parsing bug
     const slug = identifier.toLowerCase().replace(/\s+/g, '_');
-    const { data: profs } = await sb.from('profiles')
-      .select('email')
-      .or(`username.eq.${slug},display_name.ilike.${identifier}`)
-      .limit(1);
-    const prof = profs?.[0];
+    let prof = null;
+    const { data: byUser } = await sb.from('profiles')
+      .select('email').eq('username', slug).maybeSingle();
+    if (byUser?.email) {
+      prof = byUser;
+    } else {
+      const { data: byName } = await sb.from('profiles')
+        .select('email').ilike('display_name', identifier).maybeSingle();
+      prof = byName;
+    }
     if (!prof?.email) {
       hideLoading();
       showError('login-error', 'No druid found with that name. Try your email instead.');
@@ -416,8 +421,6 @@ el('btn-stop-timer').addEventListener('click', () => {
     el('btn-stop-timer').textContent = 'Resume Timer';
     el('btn-stop-timer').classList.remove('btn-stop');
     el('btn-stop-timer').classList.add('btn-secondary');
-    el('timer-result').textContent = `Time: ${formatTime(state.timerMs)}`;
-    show('timer-result');
   } else {
     state.timerStart = Date.now() - state.timerMs;
     state.timerStopped = false;
@@ -428,13 +431,13 @@ el('btn-stop-timer').addEventListener('click', () => {
     el('btn-stop-timer').textContent = 'Stop Timer';
     el('btn-stop-timer').classList.add('btn-stop');
     el('btn-stop-timer').classList.remove('btn-secondary');
-    hide('timer-result');
   }
 });
 
 // ── Record Win (unified solo + challenge) ──
 el('btn-record-win').addEventListener('click', () => {
   if (!state.currentChallenge) return;
+  if (!confirm('Record a win and finish this duel?')) return;
   stopTimer();
   state.timerStopped = true;
   if (state.isSolo) {
@@ -625,7 +628,7 @@ async function initHistory() {
     const photoHtml = s.knot_photo_url
       ? `<div class="history-photo"><img src="${s.knot_photo_url}" alt="Knot photo"></div>` : '';
     const playersHtml = players.map(p =>
-      `<span class="history-player${p.is_winner ? ' winner' : ''}">${escapeHtml(p.display_name)}${p.is_winner ? ' ⬡' : ''}</span>`
+      `<span class="history-player${p.is_winner ? ' winner' : ''}">${escapeHtml(p.display_name)}${p.is_winner ? ' 👑' : ''}</span>`
     ).join(', ');
     return `<div class="history-item parchment">
       <div class="history-header">
