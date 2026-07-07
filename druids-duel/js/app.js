@@ -468,7 +468,7 @@ async function drawChallenge() {
 
   startTimer();
   showPlayStep('active');
-  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+  requestAnimationFrame(() => { document.documentElement.scrollTop = 0; document.body.scrollTop = 0; });
 }
 
 function renderChallengeCard(c) {
