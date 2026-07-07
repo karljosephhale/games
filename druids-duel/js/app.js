@@ -754,12 +754,22 @@ window.toggleVisible = async (id, visible) => {
 // Show something immediately (sync) so the page is never blank
 route();
 
-sb.auth.onAuthStateChange(async (event, session) => {
+sb.auth.onAuthStateChange((event, session) => {
+  // IMPORTANT: must NOT be async and must NOT await any Supabase calls here.
+  // The SDK awaits all subscriber callbacks; Supabase DB/auth calls internally
+  // await initializePromise — which is still pending during this callback —
+  // creating a circular deadlock. Fire-and-forget instead.
   state.user = session?.user ?? null;
   if (state.user) {
-    try { await loadUserData(); } catch(e) { console.warn('loadUserData error:', e); }
+    loadUserData()
+      .catch(e => console.warn('loadUserData error:', e))
+      .finally(() => route());
+  } else {
+    state.profile = null;
+    state.completedIds = new Set();
+    state.bestTimes = {};
+    route();
   }
-  route();
 });
 
 window.addEventListener('hashchange', route);
