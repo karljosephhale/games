@@ -650,13 +650,26 @@ async function initHistory() {
 async function initFriends() {
   if (!state.user) return;
   showLoading();
-  const { data: fr } = await sb.from('friendships')
-    .select('*, requester:profiles!requester_id(id,display_name,username), addressee:profiles!addressee_id(id,display_name,username)')
+  const { data: fr, error: frErr } = await sb.from('friendships')
+    .select('id, requester_id, addressee_id, status')
     .or(`requester_id.eq.${state.user.id},addressee_id.eq.${state.user.id}`);
+  if (frErr) { hideLoading(); showToast('Circle error: ' + frErr.message); console.error('friendships query error:', frErr); return; }
+
+  // Collect all profile IDs and fetch in one query
+  const pids = [...new Set((fr||[]).flatMap(f => [f.requester_id, f.addressee_id]))];
+  const { data: profiles } = pids.length
+    ? await sb.from('profiles').select('id, display_name, username').in('id', pids)
+    : { data: [] };
+  const pmap = Object.fromEntries((profiles||[]).map(p => [p.id, p]));
+  const enriched = (fr||[]).map(f => ({
+    ...f,
+    requester: pmap[f.requester_id] || null,
+    addressee: pmap[f.addressee_id] || null,
+  }));
   hideLoading();
 
-  const accepted = (fr||[]).filter(f => f.status === 'accepted');
-  const pending  = (fr||[]).filter(f => f.status === 'pending');
+  const accepted = enriched.filter(f => f.status === 'accepted');
+  const pending  = enriched.filter(f => f.status === 'pending');
 
   el('friends-list').innerHTML = accepted.length === 0
     ? '<p class="empty-state">Your circle is empty. Search for druids to invite!</p>'
