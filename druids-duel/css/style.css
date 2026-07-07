@@ -140,7 +140,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   padding: 0.5rem 1.5rem;
 }
 .nav-brand { display: flex; align-items: center; }
-.nav-logo  { height: 40px; width: auto; object-fit: contain; border-radius: 4px; mix-blend-mode: multiply; }
+.nav-logo  { height: 40px; width: auto; object-fit: contain; }
 .nav-links {
   display: flex; align-items: center; gap: 0.25rem;
   flex-wrap: wrap; margin-left: auto;
@@ -200,7 +200,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   background: var(--parchment) url('../assets/parchment.png') center/cover;
   border-radius: 12px; border: none; max-width: 480px; width: 90%;
 }
-.cover-logo    { max-width: 280px; width: 80%; border-radius: 8px; margin-bottom: 1rem; mix-blend-mode: multiply; }
+.cover-logo    { max-width: 280px; width: 80%; margin-bottom: 1rem; }
 .cover-tagline { color: var(--text-mid); font-size: 1.1rem; margin-bottom: 2rem; letter-spacing: 0.1em; }
 .cover-actions { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
 .cover-guest-links { color: var(--text-light); font-size: 0.95rem; }

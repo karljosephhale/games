@@ -407,7 +407,20 @@ document.addEventListener('click', e => {
 // ── Draw challenge ─────────────────────────
 el('btn-draw').addEventListener('click', drawChallenge);
 el('btn-redraw').addEventListener('click', () => {
-  if (!confirm('Draw a new challenge? This will discard the current one.')) return;
+  const wasRunning = !state.timerStopped;
+  if (wasRunning) stopTimer();
+  const savedMs = state.timerMs;
+  if (!confirm('Draw a new challenge? This will discard the current one.')) {
+    if (wasRunning) {
+      state.timerStart = Date.now() - savedMs;
+      state.timerStopped = false;
+      state.timerInterval = setInterval(() => {
+        state.timerMs = Date.now() - state.timerStart;
+        el('timer-display').textContent = formatTime(state.timerMs);
+      }, 100);
+    }
+    return;
+  }
   drawChallenge();
 });
 
@@ -455,7 +468,7 @@ async function drawChallenge() {
 
   startTimer();
   showPlayStep('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
 }
 
 function renderChallengeCard(c) {
