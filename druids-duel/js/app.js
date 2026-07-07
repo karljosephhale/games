@@ -84,9 +84,18 @@ function route() {
   const hash = location.hash.replace('#/','') || 'landing';
   const name = ALL_PAGES.includes(hash) ? hash : 'landing';
 
-  if (AUTH_PAGES.includes(name) && !state.user) { location.hash = '/login'; return; }
+  if (AUTH_PAGES.includes(name) && !state.user) {
+    // Save intended destination so we can return after login
+    sessionStorage.setItem('post_login_dest', location.hash || '#/play');
+    location.hash = '/login'; return;
+  }
   if (name === 'login' || name === 'register' || name === 'landing') {
-    if (state.user) { location.hash = '/play'; return; }
+    if (state.user) {
+      const dest = sessionStorage.getItem('post_login_dest') || '#/play';
+      sessionStorage.removeItem('post_login_dest');
+      location.hash = dest.replace(/^#\/?/, '') || 'play';
+      return;
+    }
   }
   showPage(name);
 }
