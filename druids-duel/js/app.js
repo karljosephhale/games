@@ -107,7 +107,7 @@ function route() {
 function showPage(name) {
   ALL_PAGES.forEach(p => hide(`page-${p}`));
   show(`page-${name}`);
-  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0; document.body.scrollTop = 0; window.scrollTo(0, 0);
 
   const showNav = state.user || ['rules','lore'].includes(name);
   el('main-nav')?.classList.toggle('hidden', !showNav);
@@ -472,7 +472,7 @@ async function drawChallenge() {
 
   startTimer();
   showPlayStep('active');
-  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0; document.body.scrollTop = 0; window.scrollTo(0, 0);
 }
 
 function renderChallengeCard(c) {
