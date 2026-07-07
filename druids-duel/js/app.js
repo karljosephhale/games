@@ -710,14 +710,24 @@ async function searchFriends() {
 }
 
 window.inviteFriend = async (id, name) => {
+  // Check both directions — prevent mutual-invite duplicates
+  const { data: fwd } = await sb.from('friendships')
+    .select('id').eq('requester_id', state.user.id).eq('addressee_id', id).maybeSingle();
+  const { data: rev } = await sb.from('friendships')
+    .select('id').eq('requester_id', id).eq('addressee_id', state.user.id).maybeSingle();
+  if (fwd || rev) {
+    showToast(rev ? `${name} has already invited you! Check Pending Invitations.` : 'Already in your circle.');
+    initFriends();
+    return;
+  }
   const { error } = await sb.from('friendships').insert({ requester_id: state.user.id, addressee_id: id });
   if (error) {
     showToast(error.message.includes('unique') ? 'Already in your circle.' : error.message);
-    initFriends(); // refresh list to show the existing relationship
+    initFriends();
     return;
   }
   showToast(`Invitation sent to ${name}!`);
-  initFriends(); // refresh list to show the new pending invite
+  initFriends();
 };
 
 // ── PROFILE ────────────────────────────────
