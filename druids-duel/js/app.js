@@ -93,7 +93,7 @@ function route() {
     if (state.user) {
       const dest = sessionStorage.getItem('post_login_dest') || '#/play';
       sessionStorage.removeItem('post_login_dest');
-      location.hash = dest.replace(/^#\/?/, '') || 'play';
+      location.hash = dest.replace(/^#/, '') || '/play';
       return;
     }
   }
