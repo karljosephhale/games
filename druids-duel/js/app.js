@@ -229,9 +229,10 @@ function initPlayPage() {
   hide('timer-result');
   hide('complete-success');
   hide('btn-stop-timer');
-  show('btn-complete');
-  hide('btn-record-winner');
+  hide('btn-record-win');
+  hide('btn-redraw');
   hide('game-save-success');
+  state.saving = false;
 }
 
 function showPlayStep(step) {
@@ -307,7 +308,10 @@ el('add-player-name').addEventListener('input', async () => {
 
 // ── Draw challenge ─────────────────────────
 el('btn-draw').addEventListener('click', drawChallenge);
-el('btn-redraw').addEventListener('click', drawChallenge);
+el('btn-redraw').addEventListener('click', () => {
+  if (!confirm('Draw a new challenge? This will discard the current one.')) return;
+  drawChallenge();
+});
 
 async function drawChallenge() {
   if (state.gamePlayers.length === 0 && !state.user) {
@@ -473,8 +477,7 @@ el('btn-record-winner').addEventListener('click', () => {
   showPlayStep('finish');
 });
 
-el('game-photo-upload').addEventListener('change', () => {
-  const file = el('game-photo-upload').files[0];
+function handlePhotoFile(file) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
@@ -484,15 +487,22 @@ el('game-photo-upload').addEventListener('change', () => {
     el('photo-upload-text').textContent = file.name;
   };
   reader.readAsDataURL(file);
-});
+}
+el('game-photo-upload').addEventListener('change', () => handlePhotoFile(el('game-photo-upload').files[0]));
+el('game-camera-upload').addEventListener('change', () => handlePhotoFile(el('game-camera-upload').files[0]));
 
-el('btn-save-game').addEventListener('click', async () => {
+// ── Unified save (solo + challenge) ────────
+async function saveAndFinish() {
+  if (state.saving) return;
+  state.saving = true;
   showLoading();
-  const winnerIdx = Number(el('game-winner-select').value);
+
+  const winnerIdx = state.isSolo ? 0 : Number(el('game-winner-select').value);
   const elapsed = state.timerMs;
 
+  // Upload photo if provided (from gallery OR camera)
   let photoUrl = null;
-  const file = el('game-photo-upload').files[0];
+  const file = el('game-photo-upload').files[0] || el('game-camera-upload').files[0];
   if (file && state.user) {
     const ext = file.name.split('.').pop();
     const { data: upload } = await sb.storage.from('knot-photos')
@@ -506,19 +516,20 @@ el('btn-save-game').addEventListener('click', async () => {
   const { data: session, error: sessionErr } = await sb.from('game_sessions').insert({
     challenge_id: state.currentChallenge?.id,
     host_user_id: state.user?.id || null,
-    started_at: new Date(state.gameTimerStart || state.timerStart || Date.now()).toISOString(),
+    started_at: new Date(state.timerStart || Date.now()).toISOString(),
     completed_at: new Date().toISOString(),
-    is_solo: false,
+    is_solo: state.isSolo,
     knot_photo_url: photoUrl,
   }).select().single();
 
   if (sessionErr) {
     console.error('game_sessions insert failed:', sessionErr);
+    state.saving = false;
     hideLoading();
-    show('game-save-success');
-    showToast('Saved! (DB error — ' + sessionErr.message + ')');
+    showToast('Save failed — ' + sessionErr.message);
     return;
   }
+
   if (session) {
     for (const [i, p] of state.gamePlayers.entries()) {
       const { error: playerErr } = await sb.from('session_players').insert({
@@ -530,15 +541,29 @@ el('btn-save-game').addEventListener('click', async () => {
       });
       if (playerErr) console.error('session_players insert failed:', playerErr);
     }
-    if (state.currentChallenge) state.completedIds.add(state.currentChallenge.id);
+    if (state.currentChallenge) {
+      state.completedIds.add(state.currentChallenge.id);
+      if (elapsed && state.isSolo) {
+        const cid = state.currentChallenge.id;
+        if (!state.bestTimes[cid] || elapsed < state.bestTimes[cid]) state.bestTimes[cid] = elapsed;
+      }
+    }
   }
+
+  state.saving = false;
   hideLoading();
   show('game-save-success');
-  showToast('Duel recorded! ⬡');
+  showToast(state.isSolo ? 'Challenge recorded! ⬡' : 'Duel recorded! ⬡');
   setTimeout(() => { location.hash = '/history'; }, 1800);
-});
+}
 
-el('btn-skip-save').addEventListener('click', () => { location.hash = '/play'; });
+el('btn-save-game').addEventListener('click', saveAndFinish);
+
+// Clicking anywhere on the finish card (outside interactive elements) also saves
+el('play-step-finish').addEventListener('click', e => {
+  if (e.target.closest('button, select, label, input, a')) return;
+  saveAndFinish();
+});
 
 // ── ALL CHALLENGES ─────────────────────────
 async function initChallengeList() {

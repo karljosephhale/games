@@ -220,9 +220,8 @@
 
       <div class="challenge-actions">
         <button id="btn-stop-timer" class="btn-stop hidden">Stop Timer</button>
-        <button id="btn-complete" class="btn-primary">Mark Complete</button>
-        <button id="btn-record-winner" class="btn-primary hidden">Record Winner</button>
-        <button id="btn-redraw" class="btn-ghost">Draw Another</button>
+        <button id="btn-record-win" class="btn-primary hidden">Record Win</button>
+        <button id="btn-redraw" class="btn-ghost hidden">Draw Another</button>
       </div>
 
       <div id="complete-success" class="success-banner hidden">
@@ -232,26 +231,31 @@
     </div>
   </div>
 
-  <!-- STEP 3: Finish (multiplayer) -->
+  <!-- STEP 3: Record the Duel -->
   <div id="play-step-finish" class="play-step hidden">
     <div class="page-content">
-      <div class="parchment finish-card">
+      <div class="parchment finish-card" id="finish-card">
         <h2 class="section-title">Record the Duel</h2>
-        <div class="form-group">
+        <div class="form-group" id="winner-group">
           <label for="game-winner-select">Winner</label>
           <select id="game-winner-select" class="form-select"></select>
         </div>
         <div class="form-group">
-          <label>Upload Knot Photo <span class="optional">(optional)</span></label>
-          <label class="photo-upload-label" for="game-photo-upload">
-            <span id="photo-upload-text">Choose photo…</span>
-            <input type="file" id="game-photo-upload" accept="image/*" class="hidden">
-          </label>
+          <label>Knot Photo <span class="optional">(optional)</span></label>
+          <div class="photo-btns">
+            <label class="photo-upload-label" for="game-photo-upload">
+              <span id="photo-upload-text">📎 Choose Photo</span>
+              <input type="file" id="game-photo-upload" accept="image/*" class="hidden">
+            </label>
+            <label class="photo-upload-label" for="game-camera-upload">
+              📷 Take Photo
+              <input type="file" id="game-camera-upload" accept="image/*" capture="environment" class="hidden">
+            </label>
+          </div>
           <div id="photo-preview" class="photo-preview hidden"></div>
         </div>
-        <div id="game-save-success" class="form-success hidden">Duel recorded!</div>
+        <div id="game-save-success" class="form-success hidden">Duel recorded! ⬡</div>
         <button id="btn-save-game" class="btn-primary btn-full">Save &amp; Finish</button>
-        <button id="btn-skip-save" class="btn-ghost btn-full" style="margin-top:0.5rem">Skip</button>
       </div>
     </div>
   </div>
@@ -414,6 +418,6 @@
   </div>
 </div>
 
-<script src="js/app.js?v=4" defer></script>
+<script src="js/app.js?v=5" defer></script>
 </body>
 </html>

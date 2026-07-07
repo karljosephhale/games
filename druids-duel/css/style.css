@@ -30,7 +30,7 @@ html, body {
   font-family: 'Crimson Text', Georgia, serif;
   font-size: 18px;
   color: var(--text-dark);
-  background: var(--parchment) url('../assets/bg-page.jpg') center/cover fixed;
+  background: var(--parchment);
   overflow-x: hidden;
 }
 
@@ -375,6 +375,8 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 /* Finish card */
 .finish-card { }
 .optional { color: var(--text-light); font-size: 0.85rem; font-family: 'Crimson Text', serif; }
+.photo-btns { display: flex; gap: 0.75rem; }
+.photo-btns .photo-upload-label { flex: 1; text-align: center; }
 .photo-upload-label {
   display: block; padding: 0.75rem; text-align: center;
   border: 2px dashed var(--parchment-dark); border-radius: var(--radius);
@@ -453,7 +455,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 
 /* ── Rules / Lore pages ──────────────────── */
 .lore-page {
-  max-width: 760px; margin: 0 auto; padding: 0 1rem 3rem;
+  max-width: 760px; margin: 0 auto; padding: 0 2rem 3rem;
 }
 
 /* header/footer images sit INSIDE parchment, flush to edges */
@@ -464,6 +466,8 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 .lore-knot-img {
   display: block; width: 100%; height: auto;
 }
+.lore-knot-img:first-child { margin-top: 1.75rem; }
+.lore-knot-img:last-child  { margin-bottom: 1.75rem; }
 .lore-body {
   padding: 3rem 3rem;
 }
