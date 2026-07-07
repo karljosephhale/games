@@ -6,6 +6,9 @@ const SUPABASE_URL  = 'https://wxxxcibobcudmaiqsyql.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eHhjaWJvYmN1ZG1haXFzeXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTcxODgsImV4cCI6MjA5ODkzMzE4OH0.N-DGT53h529McgOT5UeplHOl1jd0BzXYfUgmqKI-WDA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+// Disable browser scroll restoration so we control it on every page change
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
 // ── State ─────────────────────────────────
 let state = {
   user: null,
@@ -104,6 +107,7 @@ function route() {
 function showPage(name) {
   ALL_PAGES.forEach(p => hide(`page-${p}`));
   show(`page-${name}`);
+  window.scrollTo(0, 0);
 
   const showNav = state.user || ['rules','lore'].includes(name);
   el('main-nav')?.classList.toggle('hidden', !showNav);
@@ -468,7 +472,7 @@ async function drawChallenge() {
 
   startTimer();
   showPlayStep('active');
-  requestAnimationFrame(() => { document.documentElement.scrollTop = 0; document.body.scrollTop = 0; });
+  window.scrollTo(0, 0);
 }
 
 function renderChallengeCard(c) {
