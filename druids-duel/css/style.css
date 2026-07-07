@@ -30,7 +30,7 @@ html, body {
   font-family: 'Crimson Text', Georgia, serif;
   font-size: 18px;
   color: var(--text-dark);
-  background: var(--green-dark) url('../assets/bg-page.jpg') center/cover fixed;
+  background: var(--parchment) url('../assets/bg-page.jpg') center/cover fixed;
   overflow-x: hidden;
 }
 
@@ -71,7 +71,6 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 .parchment {
   background: var(--parchment) url('../assets/parchment.jpg') center/cover;
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 1.5rem;
   border: 1px solid var(--parchment-dark);
 }
@@ -193,7 +192,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 /* ── Cover / Landing ─────────────────────── */
 .cover-page {
   min-height: 100vh;
-  background: url('../assets/bg-cover.jpg') center/cover no-repeat;
+  background: var(--parchment) url('../assets/parchment.jpg') center/cover;
   display: flex; align-items: center; justify-content: center;
 }
 .cover-content {
@@ -214,7 +213,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
   padding: 2rem 1rem;
-  background: url('../assets/bg-cover.jpg') center/cover no-repeat;
+  background: var(--parchment) url('../assets/parchment.jpg') center/cover;
 }
 .auth-card { width: 100%; max-width: 420px; }
 .auth-title { font-size: 1.4rem; text-align: center; color: var(--ink); margin-bottom: 1.5rem; }
@@ -396,7 +395,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   padding: 1rem; cursor: default;
   transition: transform 0.15s, box-shadow 0.15s;
 }
-.challenge-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.challenge-tile:hover { transform: translateY(-2px); }
 .challenge-tile.completed { opacity: 0.85; }
 .tile-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
 .tile-id     { font-size: 0.75rem; color: var(--text-light); font-family: 'Cinzel', serif; margin-left: auto; }
