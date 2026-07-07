@@ -71,7 +71,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
 .parchment {
   background: var(--parchment) url('../assets/parchment.png') center/cover;
   border-radius: var(--radius);
-  padding: 1.5rem;
+  padding: 2rem 2.5rem;
   border: 1px solid var(--parchment-dark);
 }
 
@@ -465,7 +465,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   display: block; width: 100%; height: auto;
 }
 .lore-body {
-  padding: 2.5rem 2rem;
+  padding: 3rem 3rem;
 }
 .lore-title {
   font-size: 1.8rem; color: var(--ink); text-align: center;
@@ -502,7 +502,7 @@ h1, h2, h3, .nav-link, .btn-primary, .btn-secondary, .btn-ghost,
   .timer-display    { font-size: 2.2rem; }
   .challenge-actions { flex-direction: column; align-items: stretch; }
   .challenges-grid  { grid-template-columns: 1fr 1fr; }
-  .lore-body        { padding: 1.5rem 1rem; }
+  .lore-body        { padding: 2rem 1.5rem; }
   .stats-row        { gap: 0.5rem; }
   .page-content     { padding: 1.25rem 1rem; }
 }
