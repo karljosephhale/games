@@ -703,6 +703,13 @@ async function initFriends() {
             : ''}
         </div>`;
       }).join('');
+
+  // Scroll to pending section if there are incoming invites
+  if (pending.some(f => f.addressee_id === state.user.id)) {
+    setTimeout(() => {
+      el('pending-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
 }
 
 window.acceptFriend = async id => {
