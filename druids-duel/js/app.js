@@ -23,6 +23,7 @@ let state = {
   gameTimerInterval: null,
   gameTimerMs: 0,
   isSolo: true,
+  circleFriends: [],      // accepted friends [{id, display_name, username}]
 };
 
 const WEAVES = [
@@ -233,6 +234,42 @@ el('nav-hamburger').addEventListener('click', () => {
   el('main-nav').classList.toggle('mobile-open');
 });
 
+// Close mobile nav when a link is clicked
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => el('main-nav').classList.remove('mobile-open'));
+});
+// Close mobile nav when tapping outside
+document.addEventListener('click', e => {
+  if (!el('main-nav')?.contains(e.target)) {
+    el('main-nav').classList.remove('mobile-open');
+  }
+});
+
+// ── Circle friends loader ────────────────────
+async function loadCircleFriends() {
+  if (!state.user) return;
+  const { data: fr } = await sb.from('friendships')
+    .select('requester_id, addressee_id')
+    .or(`requester_id.eq.${state.user.id},addressee_id.eq.${state.user.id}`)
+    .eq('status', 'accepted');
+  if (!fr?.length) { state.circleFriends = []; return; }
+  const pids = fr.map(f => f.requester_id === state.user.id ? f.addressee_id : f.requester_id);
+  const { data: profiles } = await sb.from('profiles')
+    .select('id, display_name, username').in('id', pids);
+  // Order by most recently played together
+  const { data: recent } = await sb.from('session_players')
+    .select('user_id, session_id')
+    .in('user_id', pids)
+    .order('session_id', { ascending: false }).limit(100);
+  const lastIdx = {};
+  for (const row of (recent || [])) {
+    if (!(row.user_id in lastIdx)) lastIdx[row.user_id] = row.session_id;
+  }
+  state.circleFriends = (profiles || []).sort((a, b) =>
+    (lastIdx[b.id] ?? 0) - (lastIdx[a.id] ?? 0)
+  );
+}
+
 // ── PLAY PAGE ─────────────────────────────
 function initPlayPage() {
   // Reset to setup step
@@ -242,7 +279,22 @@ function initPlayPage() {
   state.gamePlayers = state.profile
     ? [{ name: state.profile.display_name || state.profile.username, user_id: state.user.id }]
     : [];
+
+  // If navigated here from Circle "Play with Selected", add those friends
+  const invited = sessionStorage.getItem('invite_to_play');
+  if (invited) {
+    sessionStorage.removeItem('invite_to_play');
+    try {
+      JSON.parse(invited).forEach(p => {
+        if (!state.gamePlayers.some(e => e.user_id === p.user_id))
+          state.gamePlayers.push(p);
+      });
+    } catch(e) {}
+  }
+
   renderPlayersList();
+  // Load circle friends for combo box (fire and forget)
+  loadCircleFriends().catch(() => {});
 
   // Reset timer UI
   stopTimer();
@@ -301,19 +353,12 @@ function addPlayerFromInput() {
   renderPlayersList();
 }
 
-// Friend suggestions while typing
-el('add-player-name').addEventListener('input', async () => {
-  const q = el('add-player-name').value.trim();
+// Friend suggestions: circle on focus, search while typing
+function renderSuggestions(items) {
   const sug = el('friend-suggestions');
-  if (q.length < 2 || !state.user) { sug.classList.add('hidden'); return; }
-
-  const { data } = await sb.from('profiles').select('id, display_name, username')
-    .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
-    .neq('id', state.user.id).limit(5);
-
-  if (!data?.length) { sug.classList.add('hidden'); return; }
+  if (!items.length) { sug.classList.add('hidden'); return; }
   sug.classList.remove('hidden');
-  sug.innerHTML = data.map(p =>
+  sug.innerHTML = items.map(p =>
     `<div class="sug-item" data-id="${p.id}" data-name="${escapeHtml(p.display_name || p.username)}">
       ${escapeHtml(p.display_name || p.username)} <span class="sug-handle">@${p.username}</span>
     </div>`).join('');
@@ -325,6 +370,38 @@ el('add-player-name').addEventListener('input', async () => {
       renderPlayersList();
     })
   );
+}
+
+el('add-player-name').addEventListener('focus', () => {
+  if (!state.user || el('add-player-name').value.trim().length > 0) return;
+  const available = state.circleFriends.filter(f =>
+    !state.gamePlayers.some(p => p.user_id === f.id)
+  );
+  renderSuggestions(available);
+});
+
+el('add-player-name').addEventListener('input', async () => {
+  const q = el('add-player-name').value.trim();
+  const sug = el('friend-suggestions');
+  if (!state.user) { sug.classList.add('hidden'); return; }
+  if (q.length === 0) {
+    const available = state.circleFriends.filter(f =>
+      !state.gamePlayers.some(p => p.user_id === f.id)
+    );
+    renderSuggestions(available); return;
+  }
+  if (q.length < 2) { sug.classList.add('hidden'); return; }
+
+  const { data } = await sb.from('profiles').select('id, display_name, username')
+    .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+    .neq('id', state.user.id).limit(5);
+
+  renderSuggestions(data || []);
+});
+
+document.addEventListener('click', e => {
+  if (!el('add-player-name')?.contains(e.target) && !el('friend-suggestions')?.contains(e.target))
+    el('friend-suggestions')?.classList.add('hidden');
 });
 
 // ── Draw challenge ─────────────────────────
@@ -378,6 +455,7 @@ async function drawChallenge() {
 
   startTimer();
   showPlayStep('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function renderChallengeCard(c) {
@@ -449,8 +527,22 @@ el('btn-stop-timer').addEventListener('click', () => {
 // ── Record Win (unified solo + challenge) ──
 el('btn-record-win').addEventListener('click', () => {
   if (!state.currentChallenge) return;
-  if (!confirm('Record a win and finish this duel?')) return;
-  stopTimer();
+  // Pause timer before dialog so confirm wait time isn't counted
+  const wasRunning = !state.timerStopped;
+  if (wasRunning) stopTimer();
+  const savedMs = state.timerMs;
+  if (!confirm('Record a win and finish this duel?')) {
+    // Cancelled — resume timer from where it was
+    if (wasRunning) {
+      state.timerStart = Date.now() - savedMs;
+      state.timerStopped = false;
+      state.timerInterval = setInterval(() => {
+        state.timerMs = Date.now() - state.timerStart;
+        el('timer-display').textContent = formatTime(state.timerMs);
+      }, 100);
+    }
+    return;
+  }
   state.timerStopped = true;
   if (state.isSolo) {
     hide('winner-group');
@@ -482,6 +574,30 @@ function handlePhotoFile(file) {
 el('game-photo-upload').addEventListener('change', () => handlePhotoFile(el('game-photo-upload').files[0]));
 el('game-camera-upload').addEventListener('change', () => handlePhotoFile(el('game-camera-upload').files[0]));
 
+// ── Image resize helper ───────────────────
+async function resizeImage(file, maxDim = 1200) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (w <= maxDim && h <= maxDim) { resolve(file); return; }
+      const ratio = Math.min(maxDim / w, maxDim / h);
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(w * ratio);
+      canvas.height = Math.round(h * ratio);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        blob => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+        'image/jpeg', 0.82
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 // ── Unified save (solo + challenge) ────────
 async function saveAndFinish() {
   if (state.saving) return;
@@ -493,7 +609,8 @@ async function saveAndFinish() {
 
   // Upload photo if provided (from gallery OR camera)
   let photoUrl = null;
-  const file = el('game-photo-upload').files[0] || el('game-camera-upload').files[0];
+  const rawFile = el('game-photo-upload').files[0] || el('game-camera-upload').files[0];
+  const file = rawFile ? await resizeImage(rawFile) : null;
   if (file && state.user) {
     const ext = file.name.split('.').pop();
     const { data: upload } = await sb.storage.from('knot-photos')
@@ -559,8 +676,12 @@ el('play-step-finish').addEventListener('click', e => {
 // ── ALL CHALLENGES ─────────────────────────
 async function initChallengeList() {
   showLoading();
-  const { data } = await sb.from('challenges').select('*')
-    .eq('is_visible', true).order('difficulty').order('weave_count');
+  const { data: raw } = await sb.from('challenges').select('*').eq('is_visible', true);
+  const DIFF_ORDER = { Easy: 0, Medium: 1, Hard: 2 };
+  const data = (raw || []).sort((a, b) =>
+    (DIFF_ORDER[a.difficulty] ?? 3) - (DIFF_ORDER[b.difficulty] ?? 3) ||
+    a.weave_count - b.weave_count
+  );
   hideLoading();
   if (!data) return;
 
@@ -680,15 +801,29 @@ async function initFriends() {
   const accepted = enriched.filter(f => f.status === 'accepted');
   const pending  = enriched.filter(f => f.status === 'pending');
 
-  el('friends-list').innerHTML = accepted.length === 0
-    ? '<p class="empty-state">Your circle is empty. Search for druids to invite!</p>'
-    : accepted.map(f => {
+  if (accepted.length === 0) {
+    el('friends-list').innerHTML = '<p class="empty-state">Your circle is empty. Search for druids to invite!</p>';
+  } else {
+    el('friends-list').innerHTML =
+      `<button id="btn-play-with-circle" class="btn-primary btn-sm" style="margin-bottom:0.75rem;align-self:flex-start">⚔ Play with Selected</button>` +
+      accepted.map(f => {
         const other = f.requester_id === state.user.id ? f.addressee : f.requester;
+        const otherId = f.requester_id === state.user.id ? f.addressee_id : f.requester_id;
         return `<div class="friend-item">
+          <input type="checkbox" class="circle-check" data-id="${otherId}" data-name="${escapeHtml(other?.display_name || other?.username || '?')}" style="width:1.1rem;height:1.1rem;accent-color:var(--green-dark);cursor:pointer;flex-shrink:0">
           <span class="friend-name">${escapeHtml(other?.display_name || other?.username || '?')}</span>
           <span class="friend-handle">@${other?.username || ''}</span>
         </div>`;
       }).join('');
+    el('btn-play-with-circle').addEventListener('click', () => {
+      const checked = [...document.querySelectorAll('.circle-check:checked')];
+      if (!checked.length) { showToast('Check at least one druid to play with!'); return; }
+      sessionStorage.setItem('invite_to_play', JSON.stringify(
+        checked.map(cb => ({ name: cb.dataset.name, user_id: cb.dataset.id }))
+      ));
+      location.hash = '/play';
+    });
+  }
 
   el('pending-list').innerHTML = pending.length === 0
     ? '<p class="empty-state">No pending invitations.</p>'
