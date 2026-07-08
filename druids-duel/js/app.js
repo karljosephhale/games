@@ -6,6 +6,8 @@ const SUPABASE_URL  = 'https://wxxxcibobcudmaiqsyql.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eHhjaWJvYmN1ZG1haXFzeXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTcxODgsImV4cCI6MjA5ODkzMzE4OH0.N-DGT53h529McgOT5UeplHOl1jd0BzXYfUgmqKI-WDA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+const APP_VERSION = '1.0.20';
+
 // Disable browser scroll restoration so we control it on every page change
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
@@ -27,6 +29,7 @@ let state = {
   gameTimerMs: 0,
   isSolo: true,
   circleFriends: [],      // accepted friends [{id, display_name, username}]
+  gameInProgress: false,  // true while a challenge is active (guards initPlayPage on re-route)
 };
 
 const WEAVES = [
@@ -81,7 +84,7 @@ function getSegValue(containerId) {
 
 // ── Router ────────────────────────────────
 const AUTH_PAGES   = ['play','challenges','history','friends','profile','admin'];
-const PUBLIC_PAGES = ['landing','login','register','forgot','rules','lore'];
+const PUBLIC_PAGES = ['landing','login','register','forgot','rules','lore','about'];
 const ALL_PAGES    = [...AUTH_PAGES, ...PUBLIC_PAGES];
 
 function route() {
@@ -117,12 +120,13 @@ function showPage(name) {
   });
 
   switch (name) {
-    case 'play':       initPlayPage();        break;
+    case 'play':       if (!state.gameInProgress) initPlayPage(); break;
     case 'challenges': initChallengeList();   break;
     case 'history':    initHistory();         break;
     case 'friends':    initFriends();         break;
     case 'profile':    initProfile();         break;
     case 'admin':      initAdmin();           break;
+    case 'about':      initAbout();           break;
   }
 }
 
@@ -460,6 +464,7 @@ async function drawChallenge() {
   const c = pool[Math.floor(Math.random() * pool.length)];
   state.currentChallenge = c;
   state.isSolo = state.gamePlayers.length <= 1;
+  state.gameInProgress = true;
 
   // Render challenge card
   renderChallengeCard(c);
@@ -676,6 +681,7 @@ async function saveAndFinish() {
   }
 
   state.saving = false;
+  state.gameInProgress = false;
   hideLoading();
   show('game-save-success');
   showToast(state.isSolo ? 'Challenge recorded! ⬡' : 'Duel recorded! ⬡');
@@ -689,6 +695,21 @@ el('play-step-finish').addEventListener('click', e => {
   if (e.target.closest('button, select, label, input, a')) return;
   saveAndFinish();
 });
+
+// ── ABOUT ─────────────────────────────────
+function initAbout() {
+  const el_about = el('about-content');
+  if (!el_about) return;
+  el_about.innerHTML = `
+    <div class="parchment" style="max-width:480px;margin:0 auto;text-align:center;padding:2rem">
+      <img src="assets/logo-dark.png" alt="Druid's Duel" style="width:140px;margin-bottom:1rem">
+      <h2 style="margin-bottom:0.25rem">Druid's Duel</h2>
+      <p style="color:var(--text-light);margin-bottom:1.5rem">A Celtic Knot Weaving Challenge</p>
+      <p style="margin-bottom:0.5rem"><strong>Version</strong> ${APP_VERSION}</p>
+      <p style="margin-bottom:0.5rem"><strong>Website</strong> <a href="https://games.karlhale.com/druids-duel" style="color:var(--gold-dark)">games.karlhale.com/druids-duel</a></p>
+      <p style="margin-top:1.5rem;color:var(--text-light);font-size:0.9rem">© Karl Hale, 2026. All rights reserved.</p>
+    </div>`;
+}
 
 // ── ALL CHALLENGES ─────────────────────────
 async function initChallengeList() {
