@@ -996,17 +996,23 @@ sb.auth.onAuthStateChange((event, session) => {
   // The SDK awaits all subscriber callbacks; Supabase DB/auth calls internally
   // await initializePromise — which is still pending during this callback —
   // creating a circular deadlock. Fire-and-forget instead.
+  //
+  // Only re-route on real sign-in / sign-out transitions.
+  // TOKEN_REFRESHED fires when iOS returns from the camera / file picker and
+  // must NOT trigger route() — that would call initPlayPage() and wipe the
+  // in-progress game state.
   state.user = session?.user ?? null;
-  if (state.user) {
+  if (event === 'SIGNED_IN') {
     loadUserData()
       .catch(e => console.warn('loadUserData error:', e))
       .finally(() => route());
-  } else {
+  } else if (event === 'SIGNED_OUT') {
     state.profile = null;
     state.completedIds = new Set();
     state.bestTimes = {};
     route();
   }
+  // TOKEN_REFRESHED, USER_UPDATED, etc.: update state.user only, no re-route.
 });
 
 window.addEventListener('hashchange', route);
