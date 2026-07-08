@@ -6,7 +6,7 @@ const SUPABASE_URL  = 'https://wxxxcibobcudmaiqsyql.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eHhjaWJvYmN1ZG1haXFzeXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTcxODgsImV4cCI6MjA5ODkzMzE4OH0.N-DGT53h529McgOT5UeplHOl1jd0BzXYfUgmqKI-WDA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-const APP_VERSION = '1.0.20';
+const APP_VERSION = '1.0.21';
 
 // Disable browser scroll restoration so we control it on every page change
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
